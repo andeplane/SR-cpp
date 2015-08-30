@@ -5,10 +5,14 @@ SR::SR()
 
 }
 
-void SR::boost(SR::vec &fourVector, vec3 direction, double beta)
+void SR::boost(SR::vec &fourVector, arma::vec3 direction, double beta)
 {
+#ifdef SRDEBUG
+    cout << "Applying boost with hyperbolic angle " << beta << " along direction: " << direction;
+#endif
+
     direction = normalise(direction);
-    mat44 omega;
+    arma::mat44 omega;
     omega.zeros();
     double gamma = 1.0/sqrt(1 - beta*beta);
     double chi = acosh(gamma);
@@ -20,13 +24,21 @@ void SR::boost(SR::vec &fourVector, vec3 direction, double beta)
     }
 
     mat44 boostOperator = LorentzGenerator::generateElement(omega);
+#ifdef SRDEBUG
+    cout << "Boost matrix: " << endl << boostOperator;
+#endif
+
     fourVector.applyOperator(boostOperator);
 }
 
-void SR::rotate(SR::vec &fourVector, vec3 axis, double angle)
+void SR::rotate(SR::vec &fourVector, arma::vec3 axis, double angle)
 {
+#ifdef SRDEBUG
+    cout << "Applying rotation with angle " << angle << " about axis: " << axis;
+#endif
+
     axis = normalise(axis);
-    mat44 omega;
+    arma::mat44 omega;
     omega.zeros();
 
     for(int mu=1; mu<=3; mu++) {
@@ -41,14 +53,17 @@ void SR::rotate(SR::vec &fourVector, vec3 axis, double angle)
     }
 
     mat44 rotationOperator = LorentzGenerator::generateElement(omega);
+#ifdef SRDEBUG
+    cout << "Rotation matrix: " << endl << rotationOperator;
+#endif
     fourVector.applyOperator(rotationOperator);
 }
 
-void SR::boostAndRotate(SR::vec &fourVector, vec3 boostDirection, double beta, vec3 rotationAxis, double angle)
+void SR::boostAndRotate(SR::vec &fourVector, arma::vec3 boostDirection, double beta, arma::vec3 rotationAxis, double angle)
 {
     boostDirection = normalise(boostDirection);
     rotationAxis = normalise(rotationAxis);
-    mat44 omega;
+    arma::mat44 omega;
     omega.zeros();
 
     double gamma = 1.0/sqrt(1 - beta*beta);
@@ -78,17 +93,94 @@ std::ostream& operator<<(std::ostream &stream, const SR::vec vector) {
     return stream << vector.m_vector;
 }
 
-double SR::vec::length()
+double SR::vec::lengthSquared()
 {
-    double len = m_vector(0)*m_vector(0);
-    for(int i=1; i<=3; i++) {
-        len -= m_vector(i)*m_vector(i);
-    }
-
-    return len;
+    vec &thisVector = *this;
+    return thisVector*thisVector;
 }
 
-void SR::vec::applyOperator(const mat44 &op)
+void SR::vec::applyOperator(const arma::mat44 &op)
 {
     m_vector = op*m_vector;
+}
+
+SR::vec SR::vec::operator +(SR::vec rhs)
+{
+    return SR::vec(m_vector + rhs.m_vector);
+}
+
+SR::vec SR::vec::operator +=(SR::vec rhs)
+{
+    return SR::vec(m_vector + rhs.m_vector);
+}
+
+SR::vec SR::vec::operator -=(SR::vec rhs)
+{
+    return SR::vec(m_vector - rhs.m_vector);
+}
+
+SR::vec SR::vec::operator/=(double scalar)
+{
+
+}
+
+void SR::vec::add(SR::vec rhs)
+{
+    m_vector(0) += rhs(0);
+    m_vector(2) += rhs(1);
+    m_vector(2) += rhs(2);
+    m_vector(3) += rhs(3);
+}
+
+void SR::vec::addAndMultiply(SR::vec rhs, double scalar)
+{
+    m_vector(0) += rhs(0)*scalar;
+    m_vector(2) += rhs(1)*scalar;
+    m_vector(2) += rhs(2)*scalar;
+    m_vector(3) += rhs(3)*scalar;
+}
+
+SR::vec SR::vec::operator -(SR::vec rhs)
+{
+    return SR::vec(m_vector - rhs.m_vector);
+}
+
+SR::vec SR::vec::operator*(double scalar)
+{
+    return SR::vec(m_vector*scalar);
+}
+
+SR::vec SR::vec::operator+(double scalar)
+{
+    return SR::vec(m_vector+scalar);
+}
+
+SR::vec SR::vec::operator-(double scalar)
+{
+    return SR::vec(m_vector-scalar);
+}
+
+SR::vec SR::vec::operator/(double scalar)
+{
+    return SR::vec(m_vector/scalar);
+}
+
+SR::vec SR::vec::operator*=(double scalar)
+{
+    return SR::vec(m_vector*scalar);
+}
+
+SR::vec SR::vec::operator+=(double scalar)
+{
+    return SR::vec(m_vector+scalar);
+}
+
+SR::vec SR::vec::operator-=(double scalar)
+{
+    return SR::vec(m_vector-scalar);
+}
+
+double SR::vec::operator *(SR::vec rhs)
+{
+    return t()*rhs.t() - (x()*rhs.x() + y()*rhs.y() + z()*rhs.z());
 }

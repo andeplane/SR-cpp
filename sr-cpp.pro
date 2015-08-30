@@ -3,7 +3,7 @@ CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 CONFIG += c++11
-
+#DEFINES += SRDEBUG
 LIBS += -L/usr/local/Cellar/armadillo/5.200.1/lib -larmadillo
 INCLUDEPATH += /usr/local/Cellar/armadillo/5.200.1/include
 SOURCES += main.cpp \
